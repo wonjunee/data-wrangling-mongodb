@@ -54,7 +54,7 @@ if __name__ == '__main__':
                    "Fairfax County GIS" : ['Fairfax County Free GIS data','www.fairfaxcounty.gov > Tax Records property map 0602010037','Fairfax County GIS (http://www.fairfaxcounty.gov/maps/metadata.htm)','county_import_v0.1_20080508235459'],
                    "knowledge" : ['ground truth','I work there','local knowledge','In-person Source, ate there'],
                    "survey" : ["ground survey"],
-                   "Tiger" : ['TIGER/Line\xae 2008 Place Shapefiles (http://www.census.gov/geo/www/tiger/)']
+                   "Tiger" : ['TIGER/Line 2008 Place Shapefiles (http://www.census.gov/geo/www/tiger/)', "Tiger2008 by DaleP 2009-02-28"]
                 }
 
     for key in fix_sources.keys():
@@ -107,5 +107,32 @@ if __name__ == '__main__':
 
     """ Top user for each source """
     for source in unique_sources:
-        print source
-    # top_user_source = db.map.aggregate
+        source_top_user = db.map.aggregate([ {
+                "$match": { "created.source" : source },
+                },
+                {
+                "$group": {
+                    "_id": "$created.user",
+                    "count": { "$sum" : 1}
+                    }
+                },
+                {
+                "$sort": {"count": -1}
+                },
+                {
+                "$limit": 1
+                }
+            ])
+        top_user = [doc for doc in source_top_user]
+        print "Top User of", source,":", top_user[0]['_id'], "-", top_user[0]["count"]
+    
+    """ Number of buildings """
+    num_building = db.map.aggregate([{
+            "$match": {"building": {"$ne" : None}}
+            },
+            {
+            "$limit": 10
+            }
+        ])
+    for doc in num_building:
+        print doc
