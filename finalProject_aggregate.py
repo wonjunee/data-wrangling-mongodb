@@ -119,14 +119,14 @@ if __name__ == '__main__':
         print "Top User of", source,":", top_user[0]['_id'], "-", top_user[0]["count"]
     
     """ Number of buildings """
-    num_building = db.map.aggregate([{
+    num_metros = db.map.aggregate([{
             "$match": {"building": {"$ne" : None}}
             },
             {
             "$group": {"_id": None, "count": {"$sum": 1}}
             }
         ])
-    for doc in num_building:
+    for doc in num_metros:
         print "\nTotal Number of Buildings:", doc["count"]
 
     """ Number of Metros """
@@ -189,6 +189,20 @@ if __name__ == '__main__':
     # 2. Percentage of top user
     # 3. Percentage of top amenity
     # 4. Percentage of top building
+
+    """ Percentage of top source """
+    top_source_percentage = 394065.0/398663.0*100
+    second_source_percentage = 3385.0/398663.0*100
+    print "Percentage of top source (None):", top_source_percentage, "%"
+    print "Percentage of 2nd top source (Bing)", second_source_percentage, "%"
+
+    """ Percentage of top user """
+    print
+    print "Percentage of top user (ingalls):", (133558.0/398663.0*100), "%"
+
+    """ Percentage of top amenity """
+    print
+    print "Percentage of top amenity ()"
 
     """ ADDITIONAL IDEAS """
     # 1. which metro station has the most number of houses nearby
