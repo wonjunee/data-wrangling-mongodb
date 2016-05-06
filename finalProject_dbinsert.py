@@ -27,5 +27,6 @@ if __name__ == "__main__":
 
     insert_to_mongodb('c:/map.json', db)
     print db.map.find_one()
-    print db.map.count() # 221611
+    print db.map.count() # 398663
     
+    assert db.map.count() == 398663

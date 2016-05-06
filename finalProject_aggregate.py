@@ -46,15 +46,16 @@ if __name__ == '__main__':
     pprint.pprint(unique_sources)
 
     """ Fix sources """
-    fix_sources = {"Bing"  : ["binng", "BING", "bing", "bing imagery", "Bing imagery", "bing imagery, _data,firld papers,on-site", "biung", "Bing, site visit"],
+    fix_sources = {"Bing"  : ['Bing; knowledge; logic','bing imagery,_data, field papers,on-site','bing imagery,_data,field papers,on-site',"binng", "BING", "bing", "bing imagery", "Bing imagery", "bing imagery, _data,firld papers,on-site", 'bing imagery, _data, field papers, on-site', "biung", "Bing, site visit"],
                    "Yahoo" : ["Yahoo imagery", "yahoo"],
                    "site visit" : ["Site visit", "imagery", "site survey", "GPS, site visit"],
-                   "ground trugh" : ["ground truthing"],
+                   "ground truth" : ["ground truthing"],
                    "fairfaxtrails.org" : ['http://www.fairfaxtrails.org', 'http://www.fairfaxtrails.org/pimmit/110707Legal_brochures_updown.pdf'],
-                   "Fairfax County GIS" : ['Fairfax County Free GIS data','www.fairfaxcounty.gov > Tax Records property map 0602010037','Fairfax County GIS (http://www.fairfaxcounty.gov/maps/metadata.htm)','county_import_v0.1_20080508235459'],
-                   "knowledge" : ['ground truth','I work there','local knowledge','In-person Source, ate there'],
+                   "Fairfax County GIS" : ['http://www.fairfaxcounty.gov/library/branches/dm/','Fairfax County Free GIS data','www.fairfaxcounty.gov > Tax Records property map 0602010037','Fairfax County GIS (http://www.fairfaxcounty.gov/maps/metadata.htm)','county_import_v0.1_20080508235459'],
+                   "knowledge" : ['from walking it','ground truth','I work there','local knowledge','In-person Source, ate there'],
                    "survey" : ["ground survey"],
-                   "Tiger" : ['TIGER/Line 2008 Place Shapefiles (http://www.census.gov/geo/www/tiger/)', "Tiger2008 by DaleP 2009-02-28"]
+                   "Tiger" : ['TIGER/Line 2008 Place Shapefiles (http://www.census.gov/geo/www/tiger/)', "Tiger2008 by DaleP 2009-02-28"],
+                   "DCGIS" : ['DCGIS; NPS','DCGIS; NPS; Park Service Map; USGS NM',"dcgis"]
                 }
 
     for key in fix_sources.keys():
@@ -131,8 +132,19 @@ if __name__ == '__main__':
             "$match": {"building": {"$ne" : None}}
             },
             {
-            "$limit": 10
+            "$group": {"_id": None, "count": {"$sum": 1}}
             }
         ])
     for doc in num_building:
-        print doc
+        print "Total Number of Buildings:", doc["count"]
+
+    """ Number of Metros """
+    num_metros = db.map.aggregate([
+            {
+            "$match": {"railway": {"$ne" : None}}
+            }
+        ])
+    metro_names = {doc["name"]: 1 for doc in num_metros}
+    pprint.pprint(metro_names)
+
+    """ ADDITIONAL IDEAS """

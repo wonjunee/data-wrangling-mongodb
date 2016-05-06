@@ -3,7 +3,11 @@ Udacity P3 - Final Project
 TROUBLES:
 	1. When finding houses, a lot of them look like "<tag k="building" v="yes"/>". So many are excluded. Only assume if "house"
 	2. Parsing source was a bit clumsy. ". or space or additional spaces..."
-	
+	3. When I try to gather the information of metro stations some of them are not updated on the map data.
+	4. Some of the sources are not known.
+	5. A lot of documents are without a source.
+
+
 
 DATA OVERVIEW:
 	What kind of tags are there? Node, Way, and so on.
@@ -22,5 +26,9 @@ DATA OVERVIEW:
 		For each source who is the top 1 contributing user?
 
 ADDITIONAL IDEAS:
+	Top user contribution percentage.
+	Top source contribution percentage
+	Top source contribution percentage (without None)
+	
 	Connect node information in "way" to "node" and get position data.
 		then for each metro find the metro where the most houses are nearby.
