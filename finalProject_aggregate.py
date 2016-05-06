@@ -1,50 +1,16 @@
 #!/usr/bin/env python
+# Run this after "finalProject_dbinsert.py"
+
 import pprint
 
 def get_db(db_name):
+    """ Import Database """
     from pymongo import MongoClient
     client = MongoClient('localhost:27017')
     db = client[db_name]
     return db
 
-def make_pipeline():
-    # complete the aggregation pipeline
-    pipeline = [
-        {"$match" : {"name" : {"$ne" : None },
-                     "lon" : {"$gt" : 75, "$lt" : 80 } } },
-        {"$unwind" : "$isPartOf"},
-        # {"$group" : {"_id" : "$isPartOf", "list" : {"$addToSet" : "$name"} } },
-        # {"$unwind" : "$list" },
-        {"$group" : {"_id" : "$isPartOf",
-                     "count" : {"$sum" : 1} } },
-        {"$sort" : {"count" : -1 } },
-        {"$limit" : 1 }
-        ]
-    return pipeline
-
-def aggregate(db, pipeline):
-    return [doc for doc in db.map.aggregate(pipeline)]
-
-if __name__ == '__main__':
-    db = get_db('finalproject')
-
-    """ Total Count """
-    print "Total Number of Records:", db.map.count()
-
-    """ Total node numbers """
-    print "Total Number of Nodes:", db.map.find({"type":"node"}).count()
-
-    """ Total way numbers """
-    print "Total Number of Ways:", db.map.find({"type":"way"}).count()
-
-    """ Total number of unique users """
-    print "Total Number of Unique Users:", len(db.map.distinct("created.user"))
-
-    """ Total number of unique sources """
-    unique_sources = db.map.distinct("created.source")
-    print "Total Number of Unique Sources:", len(unique_sources)
-    pprint.pprint(unique_sources)
-
+def fix_source(db):
     """ Fix sources """
     fix_sources = {"Bing"  : ['Bing; knowledge; logic','bing imagery,_data, field papers,on-site','bing imagery,_data,field papers,on-site',"binng", "BING", "bing", "bing imagery", "Bing imagery", "bing imagery, _data,firld papers,on-site", 'bing imagery, _data, field papers, on-site', "biung", "Bing, site visit"],
                    "Yahoo" : ["Yahoo imagery", "yahoo"],
@@ -72,6 +38,31 @@ if __name__ == '__main__':
     print "After processing"
     print "Total Number of Unique Sources:", len(unique_sources)
     pprint.pprint(unique_sources)
+    return unique_sources
+
+if __name__ == '__main__':
+    db = get_db('finalproject')
+
+    """ Total Count """
+    print "Total Number of Records:", db.map.count()
+
+    """ Total node numbers """
+    print "Total Number of Nodes:", db.map.find({"type":"node"}).count()
+
+    """ Total way numbers """
+    print "Total Number of Ways:", db.map.find({"type":"way"}).count()
+
+    """ Total number of unique users """
+    print "Total Number of Unique Users:", len(db.map.distinct("created.user"))
+
+    """ Total number of unique sources """
+    unique_sources = db.map.distinct("created.source")
+    print "Total Number of Unique Sources:", len(unique_sources)
+    pprint.pprint(unique_sources)
+
+
+    """ Fix Sources """
+    # unique_sources = fix_source(db)
 
     """ Top contributing users """
     top_user = db.map.aggregate([{"$group":{"_id":"$created.user", "count":{"$sum":1}}}, {"$sort":{"count":-1}}, {"$limit":5}])
@@ -104,7 +95,7 @@ if __name__ == '__main__':
         one_time_users_list.append(user)
         count += 1
 
-    print "Number of One Time Users:", count
+    print "\nNumber of One Time Users:", count
 
     """ Top user for each source """
     for source in unique_sources:
@@ -136,15 +127,70 @@ if __name__ == '__main__':
             }
         ])
     for doc in num_building:
-        print "Total Number of Buildings:", doc["count"]
+        print "\nTotal Number of Buildings:", doc["count"]
 
     """ Number of Metros """
     num_metros = db.map.aggregate([
             {
-            "$match": {"railway": {"$ne" : None}}
+            "$match": {"railway": "station"}
+            },
+            {
+            "$project": {"railway": "$railway",
+                         "name" : "$name",
+                         "type" : "$type"}
             }
         ])
-    metro_names = {doc["name"]: 1 for doc in num_metros}
-    pprint.pprint(metro_names)
+    print "\nNumber of Metros"
+    for i in num_metros:
+        pprint.pprint(i["name"])
+    # Actually there are more than 3 but looks like the data is not up-to-date.
+
+    """ Number of Amenities """
+    num_metros = db.map.aggregate([
+            {
+            "$match": {"amenity": {"$ne": None}}
+            },
+            {
+            "$group": {"_id": "$amenity"}
+            },
+            {
+            "$group": {"_id": None, "count": {"$sum": 1}}
+            }
+        ])
+    for i in num_metros:
+        print "\nNumber of Amenities:", i["count"]
+
+    """ Number of Schools """
+    num_metros = db.map.aggregate([
+            {
+            "$match": {"amenity": "school"}
+            },
+            {
+            "$group": {"_id": None, "count":{"$sum":1}}
+            }
+        ])
+    for i in num_metros:
+        print "\nNumber of Schools:", i["count"]
+
+    """ Number of Buildings """
+    num_metros = db.map.aggregate([
+            {
+            "$match": {"building": {"$ne": None}}
+            },
+            {
+            "$group": {"_id": None, "count":{"$sum": 1}}
+            }
+        ])
+    for i in num_metros:
+        print "\nNumber of Buildings:", i["count"]
+
+    """ ADDITIONAL STATISTICS """
+    # 1. Percentage of top source
+    # 2. Percentage of top user
+    # 3. Percentage of top amenity
+    # 4. Percentage of top building
 
     """ ADDITIONAL IDEAS """
+    # 1. which metro station has the most number of houses nearby
+    # 2. which metro station has the most number of amenities
+    # 3. which school has the most number of housese nearby
