@@ -1,0 +1,26 @@
+Udacity P3 - Final Project
+
+TROUBLES:
+	1. When finding houses, a lot of them look like "<tag k="building" v="yes"/>". So many are excluded. Only assume if "house"
+	2. Parsing source was a bit clumsy. ". or space or additional spaces..."
+	
+
+DATA OVERVIEW:
+	What kind of tags are there? Node, Way, and so on.
+	NODE:
+		How many nodes?
+	WAY:
+		How many ways?
+	SOURCE: <tag k="source" v="Yahoo"/>
+		How many sources?
+		Most frequently used source?
+	USERS:
+		How many unique users?
+		Top 1 contributing user?
+		Users who appears once.
+	SOURCE & USERS:
+		For each source who is the top 1 contributing user?
+
+ADDITIONAL IDEAS:
+	Connect node information in "way" to "node" and get position data.
+		then for each metro find the metro where the most houses are nearby.
