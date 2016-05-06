@@ -86,7 +86,7 @@ def shape_element(element):
                         way["address"][i.attrib["k"].split(":")[1]] = i.attrib["v"]
                 elif i.attrib["k"] == "source":
                     way["created"]["source"] = non_ascii.sub("",i.attrib["v"])
-                elif i.attrib["k"] == ["building", "railway", "name"]:
+                elif i.attrib["k"] in ["building", "railway", "name"]:
                     way[i.attrib["k"]] = non_ascii.sub("",i.attrib["v"])
         return way
     else:
