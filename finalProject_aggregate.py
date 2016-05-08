@@ -44,20 +44,20 @@ if __name__ == '__main__':
     db = get_db('finalproject')
 
     """ Total Count """
-    print "Total Number of Records:", db.map.count()
+    print "\nTotal Number of Records:", db.map.count()
 
     """ Total node numbers """
-    print "Total Number of Nodes:", db.map.find({"type":"node"}).count()
+    print "\nTotal Number of Nodes:", db.map.find({"type":"node"}).count()
 
     """ Total way numbers """
-    print "Total Number of Ways:", db.map.find({"type":"way"}).count()
+    print "\nTotal Number of Ways:", db.map.find({"type":"way"}).count()
 
     """ Total number of unique users """
-    print "Total Number of Unique Users:", len(db.map.distinct("created.user"))
+    print "\nTotal Number of Unique Users:", len(db.map.distinct("created.user"))
 
     """ Total number of unique sources """
     unique_sources = db.map.distinct("created.source")
-    print "Total Number of Unique Sources:", len(unique_sources)
+    print "\nTotal Number of Unique Sources:", len(unique_sources)
     pprint.pprint(unique_sources)
 
 
@@ -66,13 +66,13 @@ if __name__ == '__main__':
 
     """ Top contributing users """
     top_user = db.map.aggregate([{"$group":{"_id":"$created.user", "count":{"$sum":1}}}, {"$sort":{"count":-1}}, {"$limit":5}])
-    print "Top 5 Contributing Users"
+    print "\nTop 5 Contributing Users"
     for doc in top_user:
         print doc
 
     """ Top source """
     top_source = db.map.aggregate([{"$group":{"_id":"$created.source", "count":{"$sum":1}}}, {"$sort":{"count":-1}}, {"$limit":5}])
-    print "Top 5 Sources"
+    print "\nTop 5 Sources"
     for doc in top_source:
         print doc
 
@@ -117,33 +117,30 @@ if __name__ == '__main__':
             ])
         top_user = [doc for doc in source_top_user]
         print "Top User of", source,":", top_user[0]['_id'], "-", top_user[0]["count"]
-    
-    """ Number of buildings """
-    num_metros = db.map.aggregate([{
-            "$match": {"building": {"$ne" : None}}
-            },
-            {
-            "$group": {"_id": None, "count": {"$sum": 1}}
-            }
-        ])
-    for doc in num_metros:
-        print "\nTotal Number of Buildings:", doc["count"]
 
-    """ Number of Metros """
+
+    """ Amenities """
     num_metros = db.map.aggregate([
             {
-            "$match": {"railway": "station"}
+            "$match": {"amenity": {"$ne": None}}
             },
             {
-            "$project": {"railway": "$railway",
-                         "name" : "$name",
-                         "type" : "$type"}
+            "$group": {"_id": "$amenity", "count": {"$sum": 1}}
+            },
+            {
+            "$sort" : {"count": -1}
+            },
+            {
+            "$limit": 5
             }
         ])
-    print "\nNumber of Metros"
+
+    print "\nTop 5 Amenities"
     for i in num_metros:
-        pprint.pprint(i["name"])
+        print i
+
     # Actually there are more than 3 but looks like the data is not up-to-date.
+
 
     """ Number of Amenities """
     num_metros = db.map.aggregate([
@@ -159,6 +156,18 @@ if __name__ == '__main__':
         ])
     for i in num_metros:
         print "\nNumber of Amenities:", i["count"]
+
+    """ Number of Amenities """
+    num_metros = db.map.aggregate([
+            {
+            "$match": {"amenity": {"$ne": None}}
+            },
+            {
+            "$group": {"_id": None, "count": {"$sum": 1}}
+            }
+        ])
+    for i in num_metros:
+        print "\nNumber of Amenities Exists in The Data:", i["count"]
 
     """ Number of Schools """
     num_metros = db.map.aggregate([
@@ -184,7 +193,7 @@ if __name__ == '__main__':
     for i in num_metros:
         print "\nNumber of Buildings:", i["count"]
 
-    """ ADDITIONAL STATISTICS """
+    # ADDITIONAL STATISTICS
     # 1. Percentage of top source
     # 2. Percentage of top user
     # 3. Percentage of top amenity
@@ -193,18 +202,120 @@ if __name__ == '__main__':
     """ Percentage of top source """
     top_source_percentage = 394065.0/398663.0*100
     second_source_percentage = 3385.0/398663.0*100
-    print "Percentage of top source (None):", top_source_percentage, "%"
-    print "Percentage of 2nd top source (Bing)", second_source_percentage, "%"
+    print "\nPercentage of top source (None):", top_source_percentage, "%"
+    print "\nPercentage of 2nd top source (Bing)", second_source_percentage, "%"
 
     """ Percentage of top user """
-    print
-    print "Percentage of top user (ingalls):", (133558.0/398663.0*100), "%"
+    print "\nPercentage of top user (ingalls):", (133558.0/398663.0*100), "%"
 
     """ Percentage of top amenity """
-    print
-    print "Percentage of top amenity ()"
+    print "\nPercentage of top amenity (restaurant)", (173.0/872.0*100), "%"
 
-    """ ADDITIONAL IDEAS """
+    # ADDITIONAL IDEAS """
     # 1. which metro station has the most number of houses nearby
     # 2. which metro station has the most number of amenities
     # 3. which school has the most number of housese nearby
+    
+    # Getting metro station data
+    """ Number of Metros """
+    metros = db.map.aggregate([
+            {
+            "$match": {"railway": "station"}
+            }
+            # {
+            # "$project": {"railway": "$railway",
+            #              "name" : "$name",
+            #              "type" : "$type"}
+            # }
+        ])
+    print "\nMetros"
+    metro_lists = []
+    for i in metros:
+        print i["name"], "-", i["type"]
+        metro_lists.append(i)
+
+    print "\nNumber of Metros:", len(metro_lists)
+
+    # East Falls Church, Vienna/Fairfax-GMU, West Falls Church Metro are nodes
+    # And the others are Ways
+    # way information doesn't have position data so it has to link to the node information
+    # and extract the position data from it.
+
+    print "Find the first node from way information"
+    way_nodes = {}
+    for i in metro_lists:
+        if i["type"] == "way":
+            way_nodes[i["name"]] = i["node_refs"][0]
+    pprint.pprint(way_nodes)
+
+    nodes_pos = {}
+    for node in way_nodes.values():
+        db_way_nodes = db.map.aggregate([
+                {
+                "$match": {"id": node}
+                },
+                {
+                "$project": {"node": "$id",
+                             "pos" : "$pos"}
+                }
+            ])
+        for i in db_way_nodes:
+            nodes_pos[i["node"]] = i["pos"]
+    pprint.pprint(nodes_pos)
+
+    # Find residential type of buildings
+    num_metros = db.map.aggregate([
+            {
+            "$match": {"building": {"$ne": None}}
+            },
+            {
+            "$group": {"_id": "$building", "count": {"$sum": 1}}
+            },
+            {
+            "$sort": {"count": -1}
+            }
+        ])
+    for i in num_metros:
+        pprint.pprint(i)
+
+    # list of residential building types
+    # "apartments","residential","house", "Townhouse"
+
+    # for each position find the number of houses in a sqaure range +-0.02
+    # First gathering building node information
+    num_metros = db.map.aggregate([
+            {
+            "$match": {
+                    "$or":
+                    [
+                    {"building": "apartments"},
+                    {"building": "residential"},
+                    {"building": "house"},
+                    {"building": "Townhouse"}
+                    ]
+                }
+            },
+            {
+            "$project": {"node": "$node_refs"}
+            }
+        ])
+    building_nodes = []
+    for i in num_metros:
+        building_nodes.append(i["node"][0])
+
+    for node in building_nodes:
+        building_nodes_pos = {}
+        db_building_nodes_pos = db.map.aggregate([
+                {
+                "$match": {
+                    "type": "node",
+                    "id": node,
+                    }
+                }
+            ])
+        for i in db_building_nodes_pos:
+            building_nodes_pos["node"] = i["id"]
+            building_nodes_pos["pos"] = i["pos"]
+        db.building.insert(building_nodes_pos)
+
+    print db.building.find_one()
