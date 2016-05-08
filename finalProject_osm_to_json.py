@@ -76,10 +76,10 @@ def shape_element(element):
         for i in element.getchildren():
             if "ref" in i.attrib.keys():
                 if a == 0:
-                    way["node_refs"] = [i.attrib["ref"]]
+                    way["node_refs"] = i.attrib["ref"]
                     a = 1
                 else:
-                    way["node_refs"].append(i.attrib["ref"])
+                    pass
             elif "k" in i.attrib.keys():
                 if len(i.attrib["k"].split(":")) == 2:
                     if i.attrib["k"].split(":")[1] in ["housenumber", "street"]:
