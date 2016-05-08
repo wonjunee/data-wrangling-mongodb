@@ -62,7 +62,7 @@ if __name__ == '__main__':
 
 
     """ Fix Sources """
-    # unique_sources = fix_source(db)
+    unique_sources = fix_source(db)
 
     """ Top contributing users """
     top_user = db.map.aggregate([{"$group":{"_id":"$created.user", "count":{"$sum":1}}}, {"$sort":{"count":-1}}, {"$limit":5}])
@@ -301,7 +301,7 @@ if __name__ == '__main__':
         ])
     building_nodes = []
     for i in num_metros:
-        building_nodes.append(i["node"][0])
+        building_nodes.append(i["node"])
 
     for node in building_nodes:
         building_nodes_pos = {}
