@@ -17,7 +17,7 @@ if __name__ == '__main__':
     print db.collection_names()
     print db.building.count()
 
-    db.building_subset = db.map.aggregate([
+    result = db.map.aggregate([
             {
             "$match": {
                     "$or":
@@ -31,19 +31,12 @@ if __name__ == '__main__':
             },
             {
             "$project": {"node": "$node_refs"}
-            },
-            {
-            "$unwind": "node"
             }
         ])
-    for i in result:
-        pprint.pprint(i)
+    # for i in result:
+    #     pprint.pprint(i)
 
-    result = db.building.aggregate([
-            {
-            "$limit": 10
-            }
-        ])
-    for i in result:
-        pprint.pprint(i)
+    print db.building.find_one()
+    # for i in result:
+    #     pprint.pprint(i)
 
