@@ -20,7 +20,10 @@ def shape_element(element):
             "railway": None,
             "amenity": None,
             "name": None,
-            "pos": [],
+            "pos": {
+                "lat": None,
+                "lon": None
+                },
             "created" : {
                 "changeset": None,
                 "user": None,
@@ -37,7 +40,8 @@ def shape_element(element):
                 if key in attr.keys():
                     node[key] = attr[key]
             if "lat" in attr.keys():
-                node["pos"] = [float(attr["lat"]), float(attr["lon"])]
+                node["pos"]["lat"] = float(attr["lat"])
+                node["pos"]["lon"] = float(attr["lon"])
             for key in ["changeset","user","version","uid","timestamp","source"]:
                 if key in attr.keys():
                     node["created"][key] = attr[key]
@@ -126,7 +130,10 @@ def test():
         "railway": None,
         "amenity": None,
         "name": None,
-        "pos": [38.8695350, -77.1495846], 
+        "pos": {
+            "lat": 38.8695350,
+            "lon": -77.1495846
+        },
         "created": {
             "changeset": "19557774", 
             "user": "Jason Gottshall", 

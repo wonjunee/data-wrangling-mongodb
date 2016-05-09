@@ -2,6 +2,8 @@
 # Run this after "finalProject_dbinsert.py"
 
 import pprint
+import codecs
+import json
 
 def get_db(db_name):
     """ Import Database """
@@ -62,7 +64,7 @@ if __name__ == '__main__':
 
 
     """ Fix Sources """
-    unique_sources = fix_source(db)
+    # unique_sources = fix_source(db)
 
     """ Top contributing users """
     top_user = db.map.aggregate([{"$group":{"_id":"$created.user", "count":{"$sum":1}}}, {"$sort":{"count":-1}}, {"$limit":5}])
@@ -202,6 +204,7 @@ if __name__ == '__main__':
     """ Percentage of top source """
     top_source_percentage = 394065.0/398663.0*100
     second_source_percentage = 3385.0/398663.0*100
+
     print "\nPercentage of top source (None):", top_source_percentage, "%"
     print "\nPercentage of 2nd top source (Bing)", second_source_percentage, "%"
 
@@ -232,22 +235,23 @@ if __name__ == '__main__':
     metro_lists = []
     for i in metros:
         print i["name"], "-", i["type"]
+        if i["type"] == "node":
+            print "position:", i["pos"]
         metro_lists.append(i)
-
-    print "\nNumber of Metros:", len(metro_lists)
 
     # East Falls Church, Vienna/Fairfax-GMU, West Falls Church Metro are nodes
     # And the others are Ways
     # way information doesn't have position data so it has to link to the node information
     # and extract the position data from it.
 
-    print "Find the first node from way information"
+    print "\nFind the first node from way information"
     way_nodes = {}
     for i in metro_lists:
         if i["type"] == "way":
-            way_nodes[i["name"]] = i["node_refs"][0]
+            way_nodes[i["name"]] = i["node_refs"]
     pprint.pprint(way_nodes)
 
+    print "\nFind the position of each node of metros "
     nodes_pos = {}
     for node in way_nodes.values():
         db_way_nodes = db.map.aggregate([
@@ -263,6 +267,20 @@ if __name__ == '__main__':
             nodes_pos[i["node"]] = i["pos"]
     pprint.pprint(nodes_pos)
 
+    print "\nCreate metros to positions"
+    way_pos = {}
+    for metro in way_nodes:
+        way_pos[metro] = nodes_pos[way_nodes[metro]]
+
+    way_pos["East Falls Church"] = {'lat': 38.8859763, 'lon': -77.1568243}
+    way_pos["Vienna/Fairfax-GMU"] = {'lat': 38.8776013, 'lon': -77.2722884}
+
+    print "Way to position:"
+    pprint.pprint(way_pos)
+
+    print"\nNumber of metros:", len(way_pos)
+
+    print "\nFind the type of buildings"
     # Find residential type of buildings
     num_metros = db.map.aggregate([
             {
@@ -283,6 +301,7 @@ if __name__ == '__main__':
 
     # for each position find the number of houses in a sqaure range +-0.02
     # First gathering building node information
+
     num_metros = db.map.aggregate([
             {
             "$match": {
@@ -299,23 +318,52 @@ if __name__ == '__main__':
             "$project": {"node": "$node_refs"}
             }
         ])
-    building_nodes = []
+
+    array_building_nodes = []
     for i in num_metros:
-        building_nodes.append(i["node"])
+        array_building_nodes.append(i["node"])
 
-    for node in building_nodes:
-        building_nodes_pos = {}
-        db_building_nodes_pos = db.map.aggregate([
-                {
-                "$match": {
-                    "type": "node",
-                    "id": node,
-                    }
+    db_building_nodes_pos = db.map.aggregate([
+            {
+            "$match": {
+                "type": "node",
+                "id": {"$in" : array_building_nodes}
                 }
-            ])
-        for i in db_building_nodes_pos:
-            building_nodes_pos["node"] = i["id"]
-            building_nodes_pos["pos"] = i["pos"]
-        db.building.insert(building_nodes_pos)
+            }
+        ])
+    building_pos = []
+    for i in db_building_nodes_pos:
+        lat = i["pos"]["lat"]
+        lon = i["pos"]["lon"]
+        building_pos.append([lat,lon])
 
-    print db.building.find_one()
+    print "\nLength of building:", len(building_pos)
+    
+    print "\nFind the number of houses near each metro"
+    for metro in way_pos.keys():
+        count = 0
+        lat = way_pos[metro]["lat"]
+        lon = way_pos[metro]["lon"]
+        for pos in building_pos:
+            if pos[0] >= lat - 0.02 and \
+                pos[0] <= lat + 0.02 and \
+                pos[1] >= lon - 0.02 and \
+                pos[1] <= lon + 0.02:
+                count += 1
+        print metro, ":", count
+
+
+        # result = db.map.aggregate([
+        #         {
+        #         "$match": {"type": "way",
+        #                    "pos.lat": {"$gte": lat-0.02, "$lte": lat+0.02},
+        #                    "pos.lon": {"$gte": lon-0.02, "$lte": lon+0.02},
+        #             }
+        #         },
+        #         {
+        #         "$group": {"_id": None, "count": {"$sum": 1}}
+        #         }
+        #     ])
+        # print metro
+        # for i in result:
+        #     print i
