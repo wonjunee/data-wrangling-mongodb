@@ -9,7 +9,30 @@ import json
 lower = re.compile(r'^([a-z]|_)*$')
 lower_colon = re.compile(r'^([a-z]|_)*:([a-z]|_)*$')
 problemchars = re.compile(r'[=\+/&<>;\'"\?%#$@\,\. \t\r\n]')
+phonechars = re.compile(r'[().\-\. ]')
 non_ascii = re.compile(r'[^\x00-\x7f]')
+
+def parse_postcode(postcode):
+    return postcode.split("-")[0]
+
+def parse_street(street):
+    dic = {"Ct": "Court",
+           "Blvd": "Boulevard",
+           "Ave": "Avenue",
+           "E": "East",
+           "Rd": "Road",
+           "Pl": "Place"
+        }
+    if street.split(" ")[-1] in dic.keys():
+        return dic[street.split(" ")[-1]]
+    else:
+        return street
+
+def parse_phone(phone):
+    if phone[0] == "+":
+        phone = phone[2:]
+    return phonechars.sub("",phone)
+
 def shape_element(element):
     if element.tag == "node":
         # YOUR CODE HERE
@@ -17,9 +40,7 @@ def shape_element(element):
             "id": None,
             "visible": None,
             "type": "node",
-            "railway": None,
-            "amenity": None,
-            "name": None,
+            "address" : {},
             "pos": {
                 "lat": None,
                 "lon": None
@@ -47,10 +68,17 @@ def shape_element(element):
                     node["created"][key] = attr[key]
         for i in element.getchildren():
             if "k" in i.attrib.keys():
-                if i.attrib["k"] == "source":
+                if len(i.attrib["k"].split(":")) == 2:
+                    if i.attrib["k"].split(":")[1] == "street":
+                        node["address"][i.attrib["k"].split(":")[1]] = parse_street(i.attrib["v"])
+                    else:    
+                        node["address"][i.attrib["k"].split(":")[1]] = i.attrib["v"]
+                elif i.attrib["k"] == "source":
                     node["created"]["source"] = non_ascii.sub("",i.attrib["v"])
                 elif i.attrib["k"] in ["railway","amenity","name"]:
                     node[i.attrib["k"]] = non_ascii.sub("",i.attrib["v"])
+                elif i.attrib["k"] == "phone":
+                    node[i.attrib["k"]] = parse_phone(i.attrib["v"])
         return node
     elif element.tag == "way":
         a = 0
@@ -58,9 +86,6 @@ def shape_element(element):
             "id" : None,
             "type": "way",
             "address":{},
-            "railway": None,
-            "name": None,
-            "building" : None,
             "created" : {
                 "changeset": None,
                 "user": None,
@@ -86,12 +111,16 @@ def shape_element(element):
                     pass
             elif "k" in i.attrib.keys():
                 if len(i.attrib["k"].split(":")) == 2:
-                    if i.attrib["k"].split(":")[1] in ["housenumber", "street"]:
+                    if i.attrib["k"].split(":")[1] == "street":
+                        way["address"][i.attrib["k"].split(":")[1]] = parse_street(i.attrib["v"])
+                    else:    
                         way["address"][i.attrib["k"].split(":")[1]] = i.attrib["v"]
                 elif i.attrib["k"] == "source":
                     way["created"]["source"] = non_ascii.sub("",i.attrib["v"])
                 elif i.attrib["k"] in ["building", "railway", "name"]:
                     way[i.attrib["k"]] = non_ascii.sub("",i.attrib["v"])
+                elif i.attrib["k"] == "phone":
+                    way[i.attrib["k"]] = parse_phone(i.attrib["v"])
         return way
     else:
         return None
@@ -116,7 +145,7 @@ def test():
     # NOTE: if you are running this code on your computer, with a larger dataset, 
     # call the process_map procedure with pretty=False. The pretty=True option adds 
     # additional spaces to the output, making it significantly larger.
-    data = process_map('c:/map', False)
+    data = process_map('c:/users/WONJUN/Downloads/map', False)
 
     # print
     # for i in data:
