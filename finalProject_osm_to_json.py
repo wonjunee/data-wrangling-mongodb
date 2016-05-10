@@ -24,7 +24,8 @@ def parse_street(street):
            "Pl": "Place"
         }
     if street.split(" ")[-1] in dic.keys():
-        return dic[street.split(" ")[-1]]
+        street = street.replace(street.split(" ")[-1], dic[street.split(" ")[-1]])
+        return street
     else:
         return street
 
@@ -71,6 +72,8 @@ def shape_element(element):
                 if len(i.attrib["k"].split(":")) == 2:
                     if i.attrib["k"].split(":")[1] == "street":
                         node["address"][i.attrib["k"].split(":")[1]] = parse_street(i.attrib["v"])
+                    elif i.attrib["k"].split(":")[1] == "postcode":
+                        node["address"][i.attrib["k"].split(":")[1]] = parse_postcode(i.attrib["v"])
                     else:    
                         node["address"][i.attrib["k"].split(":")[1]] = i.attrib["v"]
                 elif i.attrib["k"] == "source":
@@ -113,6 +116,8 @@ def shape_element(element):
                 if len(i.attrib["k"].split(":")) == 2:
                     if i.attrib["k"].split(":")[1] == "street":
                         way["address"][i.attrib["k"].split(":")[1]] = parse_street(i.attrib["v"])
+                    elif i.attrib["k"].split(":")[1] == "postcode":
+                        way["address"][i.attrib["k"].split(":")[1]] = parse_postcode(i.attrib["v"])
                     else:    
                         way["address"][i.attrib["k"].split(":")[1]] = i.attrib["v"]
                 elif i.attrib["k"] == "source":
