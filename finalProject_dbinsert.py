@@ -25,7 +25,7 @@ if __name__ == "__main__":
     client.drop_database("finalproject")
     db = client.finalproject
 
-    insert_to_mongodb('c:/map.json', db)
+    insert_to_mongodb('c:/users/WONJUN/Downloads/map.json', db)
     print db.map.find_one()
     print db.map.count() # 398663
     
